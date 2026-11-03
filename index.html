@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101713">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PocketTrack">
+
+
+<title>PocketTrack</title>
+<style>
+:root{color-scheme:dark;--bg:#0c120f;--panel:#151e19;--panel2:#1c2821;--line:#2a3930;--text:#eff7f1;--muted:#9aaba0;--green:#68d69a;--red:#ff817e;--yellow:#f4ca72}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:760px;margin:auto;padding:18px 16px 100px}.top{display:flex;justify-content:space-between;align-items:center;margin:8px 0 20px}.brand{font-size:24px;font-weight:800;letter-spacing:-.7px}.brand span{color:var(--green)}.month{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:9px 12px;border-radius:12px}
+h2{font-size:17px;margin:24px 0 12px}.muted{color:var(--muted)}.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:15px}.card.wide{grid-column:1/-1}.label{color:var(--muted);font-size:12px}.amount{font-size:24px;font-weight:750;margin-top:7px;letter-spacing:-.5px}.green{color:var(--green)}.red{color:var(--red)}
+.actions{display:flex;gap:9px;margin-top:14px}.btn{border:0;border-radius:13px;padding:13px 15px;font-weight:700;background:var(--green);color:#092014;cursor:pointer}.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.btn.danger{background:#422321;color:#ffd8d5}.btn.full{width:100%}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.tx{padding:13px 0;border-bottom:1px solid var(--line)}.tx:last-child{border:0}.txname{font-weight:650}.txmeta{font-size:12px;color:var(--muted);margin-top:4px}.txamt{font-weight:750;white-space:nowrap}
+input,select{width:100%;background:#0f1712;color:var(--text);border:1px solid var(--line);padding:12px;border-radius:12px;font:inherit;margin-top:6px}label{display:block;color:var(--muted);font-size:12px;margin:12px 0 0}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.formgrid .span{grid-column:1/-1}
+.progress{height:8px;background:#29372e;border-radius:10px;overflow:hidden;margin-top:9px}.progress>i{display:block;height:100%;background:var(--green);border-radius:10px}.budgetitem{padding:12px 0;border-bottom:1px solid var(--line)}
+.tabs{position:fixed;bottom:0;left:0;right:0;background:#101813ed;backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:10px 8px calc(10px + env(safe-area-inset-bottom));z-index:5}.tabs button{flex:1;max-width:180px;background:none;border:0;color:var(--muted);font-size:12px;padding:7px;cursor:pointer}.tabs button.active{color:var(--green);font-weight:750}.tabs b{display:block;font-size:19px;margin-bottom:3px}
+.section{display:none}.section.active{display:block}.empty{text-align:center;padding:26px;color:var(--muted)}.pill{font-size:11px;border:1px solid var(--line);border-radius:20px;padding:4px 8px;color:var(--muted)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;width:min(92%,520px);padding:20px}dialog::backdrop{background:#000b}.dialog-actions{display:flex;gap:8px;margin-top:18px}.dialog-actions>*{flex:1}
+.small{font-size:12px;color:var(--muted)}.reportbar{display:flex;gap:4px;align-items:end;height:130px;padding:10px 0}.barcol{flex:1;text-align:center;font-size:10px;color:var(--muted)}.bar{background:var(--green);border-radius:6px 6px 2px 2px;min-height:3px;margin:0 auto 6px;width:min(24px,70%)}
+@media(min-width:600px){main{padding-top:28px}.amount{font-size:28px}}
+</style>
+</head>
+<body>
+<main>
+<header class="top"><div class="brand">Pocket<span>Track</span></div><input id="monthPicker" class="month" type="month" aria-label="Select month" style="width:auto;margin:0"></header>
+
+<section id="dashboard" class="section active">
+ <div class="cards">
+  <div class="card"><div class="label">Total expenses</div><div class="amount red" id="totalExpense">₹0</div></div>
+  <div class="card"><div class="label">Total income</div><div class="amount green" id="totalIncome">₹0</div></div>
+  <div class="card wide"><div class="label">Net balance this month</div><div class="amount" id="netBalance">₹0</div><div class="small" id="balanceHint">Income minus expenses</div></div>
+ </div>
+ <div class="actions"><button class="btn full" id="addExpense">＋ Add expense</button><button class="btn secondary full" id="addIncome">＋ Add income</button></div>
+ <h2>Recent transactions</h2><div class="card" id="recent"></div>
+</section>
+
+<section id="transactions" class="section">
+ <div class="row"><h2 style="margin-top:8px">Transactions</h2><button class="btn" id="addTransaction">＋ Add</button></div>
+ <div class="card" id="allTransactions"></div>
+</section>
+
+<section id="budgets" class="section">
+ <div class="row"><h2 style="margin-top:8px">Category budgets</h2><button class="btn" id="addBudget">＋ Set budget</button></div>
+ <p class="small">Set monthly spending limits. Progress updates as you record expenses.</p>
+ <div class="card" id="budgetList"></div>
+</section>
+
+<section id="reports" class="section">
+ <h2 style="margin-top:8px">Monthly report</h2>
+ <div class="cards">
+  <div class="card"><div class="label">Expenses</div><div class="amount red" id="reportExpense">₹0</div></div>
+  <div class="card"><div class="label">Income</div><div class="amount green" id="reportIncome">₹0</div></div>
+ </div>
+ <h2>Spending by category</h2><div class="card" id="categoryReport"></div>
+ <h2>Export your data</h2><div class="card"><p class="small">Download all transactions as a CSV file that opens in Microsoft Excel or Numbers.</p><button class="btn full" id="exportCsv">Export transactions to Excel (CSV)</button></div>
+</section>
+</main>
+
+<nav class="tabs">
+ <button class="active" data-tab="dashboard"><b>⌂</b>Home</button>
+ <button data-tab="transactions"><b>↕</b>Activity</button>
+ <button data-tab="budgets"><b>▤</b>Budgets</button>
+ <button data-tab="reports"><b>▥</b>Reports</button>
+</nav>
+
+<dialog id="transactionDialog">
+ <h2 id="dialogTitle" style="margin-top:0">Add transaction</h2>
+ <form id="transactionForm">
+  <div class="formgrid">
+   <div class="span"><label>Type<select id="type"><option value="expense">Expense</option><option value="income">Income</option></select></label></div>
+   <div class="span"><label>Description<input id="description" required maxlength="60" placeholder="e.g. Groceries"></label></div>
+   <div><label>Amount (₹)<input id="amount" required type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00"></label></div>
+   <div><label>Category<select id="category"></select></label></div>
+   <div class="span"><label>Date<input id="date" required type="date"></label></div>
+  </div>
+  <div class="dialog-actions"><button type="button" class="btn secondary" id="cancelDialog">Cancel</button><button class="btn" type="submit">Save transaction</button></div>
+ </form>
+</dialog>
+
+<dialog id="budgetDialog">
+ <h2 style="margin-top:0">Set category budget</h2>
+ <form id="budgetForm">
+  <label>Category<select id="budgetCategory"></select></label>
+  <label>Monthly limit (₹)<input id="budgetAmount" type="number" min="1" step="1" required inputmode="numeric" placeholder="e.g. 5000"></label>
+  <div class="dialog-actions"><button type="button" class="btn secondary" id="cancelBudget">Cancel</button><button class="btn" type="submit">Save budget</button></div>
+ </form>
+</dialog>
+<script>const CATEGORIES = ["Food","Groceries","Travel","Shopping","Bills","Rent","Health","Entertainment","Education","Personal care","Other"];
+const KEY="pockettrack-v1";
+const $=id=>document.getElementById(id);
+const money=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(n||0);
+const today=()=>new Date().toISOString().slice(0,10);
+const monthNow=()=>today().slice(0,7);
+let state=load(), editingId=null;
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{transactions:[],budgets:{}}}catch{return {transactions:[],budgets:{}}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function selectedMonth(){return $("monthPicker").value||monthNow()}
+function monthTx(){return state.transactions.filter(t=>t.date.startsWith(selectedMonth()))}
+function sum(arr,type){return arr.filter(t=>t.type===type).reduce((s,t)=>s+Number(t.amount),0)}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fillCategories(){["category","budgetCategory"].forEach(id=>$(id).innerHTML=CATEGORIES.map(c=>`<option>${c}</option>`).join(""))}
+function transactionHtml(t,actions=true){return `<div class="row tx"><div style="min-width:0"><div class="txname">${escapeHtml(t.description)}</div><div class="txmeta">${escapeHtml(t.category)} · ${t.date}</div></div><div style="text-align:right"><div class="txamt ${t.type==="income"?"green":"red"}">${t.type==="income"?"+":"−"}${money(t.amount)}</div>${actions?`<div class="txmeta"><button data-edit="${t.id}" class="small" style="background:none;border:0;color:var(--green);padding:4px">Edit</button><button data-delete="${t.id}" class="small" style="background:none;border:0;color:var(--red);padding:4px">Delete</button></div>`:""}</div></div>`}
+function render(){
+ const tx=monthTx(),exp=sum(tx,"expense"),inc=sum(tx,"income");
+ $("totalExpense").textContent=money(exp);$("totalIncome").textContent=money(inc);$("netBalance").textContent=money(inc-exp);$("netBalance").className="amount "+(inc-exp>=0?"green":"red");
+ $("balanceHint").textContent=inc-exp>=0?"You're in positive territory this month":"Expenses are higher than income";
+ const recent=[...tx].sort((a,b)=>b.date.localeCompare(a.date)||b.created-b.created).slice(0,5);
+ $("recent").innerHTML=recent.length?recent.map(t=>transactionHtml(t,false)).join(""):`<div class="empty">No transactions this month yet.<br>Add your first expense above.</div>`;
+ const all=[...tx].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+ $("allTransactions").innerHTML=all.length?all.map(t=>transactionHtml(t)).join(""):`<div class="empty">No transactions for this month.</div>`;
+ $("reportExpense").textContent=money(exp);$("reportIncome").textContent=money(inc);
+ const totals=CATEGORIES.map(c=>({c,v:tx.filter(t=>t.type==="expense"&&t.category===c).reduce((s,t)=>s+Number(t.amount),0)})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+ $("categoryReport").innerHTML=totals.length?totals.map(x=>`<div class="budgetitem"><div class="row"><b>${escapeHtml(x.c)}</b><b>${money(x.v)}</b></div><div class="progress"><i style="width:${Math.max(2,x.v/exp*100)}%"></i></div></div>`).join(""):`<div class="empty">Your category breakdown will appear here.</div>`;
+ const budgets=Object.entries(state.budgets);
+ $("budgetList").innerHTML=budgets.length?budgets.map(([c,limit])=>{const spent=tx.filter(t=>t.type==="expense"&&t.category===c).reduce((s,t)=>s+Number(t.amount),0),pct=Math.min(100,spent/limit*100);return `<div class="budgetitem"><div class="row"><b>${escapeHtml(c)}</b><span class="pill">${money(spent)} / ${money(limit)}</span></div><div class="progress"><i style="width:${pct}%;background:${spent>limit?"var(--red)":"var(--green)"}"></i></div><div class="row small" style="margin-top:6px"><span>${spent>limit?"Over budget by "+money(spent-limit):money(limit-spent)+" remaining"}</span><button data-remove-budget="${escapeHtml(c)}" style="border:0;background:none;color:var(--red)">Remove</button></div></div>`}).join(""):`<div class="empty">No budgets yet. Set a monthly limit for a category.</div>`;
+}
+function openTransaction(type="expense",t=null){editingId=t?.id||null;$("dialogTitle").textContent=t?"Edit transaction":"Add "+type;$("type").value=t?.type||type;$("description").value=t?.description||"";$("amount").value=t?.amount||"";$("category").value=t?.category||CATEGORIES[0];$("date").value=t?.date||today();$("transactionDialog").showModal()}
+$("transactionForm").addEventListener("submit",e=>{e.preventDefault();const t={id:editingId||String(Date.now()),type:$("type").value,description:$("description").value.trim(),amount:Number($("amount").value),category:$("category").value,date:$("date").value,created:Date.now()};if(!t.description||!Number.isFinite(t.amount)||t.amount<=0)return;if(editingId){const i=state.transactions.findIndex(x=>x.id===editingId);if(i>=0)state.transactions[i]=t}else state.transactions.push(t);$("transactionDialog").close();save()});
+$("addExpense").onclick=()=>openTransaction("expense");$("addIncome").onclick=()=>openTransaction("income");$("addTransaction").onclick=()=>openTransaction();
+$("cancelDialog").onclick=()=>$("transactionDialog").close();
+$("allTransactions").addEventListener("click",e=>{const edit=e.target.dataset.edit,del=e.target.dataset.delete;if(edit){const t=state.transactions.find(x=>x.id===edit);if(t)openTransaction(t.type,t)}if(del&&confirm("Delete this transaction?")){state.transactions=state.transactions.filter(x=>x.id!==del);save()}});
+$("addBudget").onclick=()=>$("budgetDialog").showModal();$("cancelBudget").onclick=()=>$("budgetDialog").close();
+$("budgetForm").addEventListener("submit",e=>{e.preventDefault();state.budgets[$("budgetCategory").value]=Number($("budgetAmount").value);$("budgetDialog").close();save()});
+$("budgetList").addEventListener("click",e=>{const c=e.target.dataset.removeBudget;if(c&&confirm("Remove this budget?")){delete state.budgets[c];save()}});
+$("monthPicker").value=monthNow();$("monthPicker").onchange=render;
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));});
+$("exportCsv").onclick=()=>{const rows=[["Date","Type","Description","Category","Amount (INR)"],...state.transactions.sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,t.type,t.description,t.category,t.amount])];const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="PocketTrack-transactions.csv";a.click();URL.revokeObjectURL(url)};
+fillCategories();render();
+</script>
+</body></html>
